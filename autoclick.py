@@ -3,6 +3,7 @@ import os
 import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import NoSuchElementException
 
 # 模拟浏览器打开网站
 chrome_options = Options()

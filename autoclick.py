@@ -53,9 +53,9 @@ def situyun():
     # 格式是PEP8自动转的
     # 这里是找到输入框,发送要输入的用户名和密码,模拟登陆
     browser.find_element_by_xpath(
-        "//*[@id='username1']").send_keys(os.environ['SITUYUN_USER'])
+        '//*[@id="username1"]').send_keys(os.environ['SITUYUN_USER'])
     browser.find_element_by_xpath(
-        "//*[@id='password1']']").send_keys(os.environ['SITUYUN_PASSWORD'])
+        '//*[@id="password1"]').send_keys(os.environ['SITUYUN_PASSWORD'])
     # 在输入用户名和密码之后,点击登陆按钮
     browser.find_element_by_xpath("/html/body/main/section[2]/form/div[3]/input").click()
     time.sleep(10)

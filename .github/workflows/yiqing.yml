@@ -39,15 +39,3 @@ jobs:
             SITUYUN_USER: ${{ secrets.SITUYUN_USER }}
             SITUYUN_PASSWORD: ${{ secrets.SITUYUN_PASSWORD }}
           run: python autoclick.py
-        - name: 'Send mail'
-          uses: dawidd6/action-send-mail@master
-          with:
-            server_address: smtp.88.com
-            server_port: 465
-            username: ${{ secrets.MAIL_USERNAME }}
-            password: ${{ secrets.MAIL_PASSWORD }}
-            subject: 华工疫情健康申报系统操作结果 (${{env.REPORT_DATE}})
-            body: file://email.txt
-            to: chateba@vip.qq.com
-            from: GitHub Actions
-            content_type: text/html

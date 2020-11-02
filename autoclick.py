@@ -1,81 +1,122 @@
-import os
-# 方便延时加载
+#coding=UTF-8
+import requests
 import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException
+from lxml import etree
+import json
+from hashlib import md5
 
-# 模拟浏览器打开网站
-chrome_options = Options()
-chrome_options.add_argument('--headless')
-chrome_options.add_argument('--no-sandbox')
-chrome_options.add_argument('--disable-dev-shm-usage')
-browser = webdriver.Chrome('/usr/bin/chromedriver', chrome_options=chrome_options)
-#window电脑本地
-# browser = webdriver.Chrome("C:\Program Files (x86)\Google\Chrome\Application\chromedriver")
-
-
-
-def scut():
-    browser.get('https://sso.scut.edu.cn/cas/login?service=https%3A%2F%2Fiamok.scut.edu.cn%2Fcas%2Flogin')
-    # 将窗口最大化
-    browser.maximize_window()
-    # 格式是PEP8自动转的
-    # 这里是找到输入框,发送要输入的用户名和密码,模拟登陆
-    browser.find_element_by_xpath(
-        "//*[@id='un']").send_keys(os.environ['SCUT_USER'])
-    browser.find_element_by_xpath(
-        "//*[@id='pd']").send_keys(os.environ['SCUT_PASSWORD'])
-    # 在输入用户名和密码之后,点击登陆按钮
-    browser.find_element_by_xpath("//*[@id='index_login_btn']").click()
-    time.sleep(50)
+url = 'https://ksky.zzvzz.top/login/?next=/'
+server = 'SCU43267Tdfa013d220d7955c54df031021df05b05c4af8f4d81c5'
+def get(xh,mm,lc):
+    r = requests.session()
+    res = r.get('https://ksky.zzvzz.top/login/?next=/')
+    t = time.time()
+    t = str(t)
+    t = t[0:9]
+    ress = r.get('https://ksky.zzvzz.top/getcheckimg/?timestamp='+t)
+    cap = run(ress.content)
+    selector = etree.HTML(res.content)
+    
+    post_value = selector.xpath('//*[@id="login-form"]/input[1]')[0].attrib['value']
+    headers = {
+            'Connection': 'keep - alive',
+            'Host': 'ksky.zzvzz.top',
+            'Referer': 'https://ksky.zzvzz.top/login/?next=/',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3486.0 Safari/537.36',
+    }    
+    data = {
+        'csrfmiddlewaretoken':post_value,
+        'username':xh,
+        'password':mm,
+        'next':'/',
+        'check_code':cap
+    }
+    r.headers = headers
+    response = r.post(url,data=data)
+    final_response = r.get('https://ksky.zzvzz.top/NCIR/user_data/add/')
+    #print(final_response.text)
     try:
-        browser.find_element_by_xpath("//*[@id='app']/div/div/div[2]/div[3]/button").click()
-        print("华工申报成功")
-        time.sleep(3)
-        saveFile("华工健康申报签到成功！")
-    except NoSuchElementException as e:
-        print ("NoSuchElementException!")
-        # js = 'document.getElementById("btn").click();'
-        # browser.execute_script(js)
-        saveFile("华工签到代码存在异常"+str(e))
+        selector_ = etree.HTML(final_response.content)
+        post_value_ = selector_.xpath('//*[@id="user_data_form"]/input')[0].attrib['value']
+    except:
+        print(final_response.text)
+        send("error"+xh)
+        return
+    final_data = {
+        'csrfmiddlewaretoken':post_value_,
+        'tw':'36.4',
+        'fl':'False',
+        'gk':'False',
+        'hx':'False',
+        'qt':'False',
+        'jc':'False',
+        'fx':'False',
+        'jqjc':'',
+        'lc':lc,
+        'actionName':'actionValue'
+    }
+    fin_res = r.post('https://ksky.zzvzz.top/NCIR/user_data/add/',data=final_data)
+    print(fin_res.text)
+    if '成功' in fin_res.text:
+        send(xh)
+    else:
+        send(fin_res.text)
+    
+    
+def send(text_):
+    data = {
+        'text':'体温',
+        'desp':text_
+    }
+    requests.post('https://sc.ftqq.com/'+server+'.send',data=data)
 
 
-def saveFile(message):
-    # 保存email内容
-    with open("email.txt", 'a+', encoding="utf-8") as email:
-        email.write(message+'\n')
 
+def run(im):
+    #可去http://www.chaojiying.com/注册账号
+    chaojiying = Chaojiying_Client('12781220600', 'smartisanT4mol', '903406') #第一个填账号 第二个填密码 第三个填  用户中心>>软件ID 生成一个替换
+    #im = open('/Users/xylophone/Pictures/a.jpg', 'rb').read() 
+    data = chaojiying.PostPic(im, 1902)
+    print ("验证码为"+data['pic_str'])     
+    return data['pic_str']  
 
-def situyun():
-    browser.get('http://yiqing.ctgu.edu.cn/wx/index/login.do?currSchool=ctgu&CURRENT_YEAR=2019&showWjdc=false&studentShowWjdc=false')
-    # 将窗口最大化
-    browser.maximize_window()
-    # 格式是PEP8自动转的
-    # 这里是找到输入框,发送要输入的用户名和密码,模拟登陆
-    browser.find_element_by_xpath(
-        '//*[@id="username1"]').send_keys(os.environ['SITUYUN_USER'])
-    browser.find_element_by_xpath(
-        '//*[@id="password1"]').send_keys(os.environ['SITUYUN_PASSWORD'])
-    # 在输入用户名和密码之后,点击登陆按钮
-    browser.find_element_by_xpath("/html/body/main/section[2]/form/div[3]/input").click()
-    time.sleep(10)
-    try:
-        if("今日已上报" in browser.find_element_by_xpath("/html/body/main/section/header/div[1]/span").text):
-            saveFile("明日再来!")
-        else:
-            browser.find_element_by_xpath("/html/body/main/section/header/div[2]/button").send_keys(Keys.ENTER)
-            # js = 'document.getElementById("checkin-div").children[0].click();'
-            # browser.execute_script(js)
-            print("司徒云打卡成功")
-        time.sleep(3)
-        saveFile("司徒云签到成功！")
-    except NoSuchElementException as e:
-        print ("NoSuchElementException!")
-        saveFile("司徒云签到代码存在异常"+str(e))
+class Chaojiying_Client(object):
 
-if __name__ == '__main__':
-    # scut()
-    situyun()
-    # 脚本运行成功,退出浏览器
-    browser.quit()
+    def __init__(self, username, password, soft_id):
+        self.username = username
+        password =  password.encode('utf8')
+        self.password = md5(password).hexdigest()
+        self.soft_id = soft_id
+        self.base_params = {
+            'user': self.username,
+            'pass2': self.password,
+            'softid': self.soft_id,
+        }
+        self.headers = {
+            'Connection': 'Keep-Alive',
+            'User-Agent': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0)',
+        }
+
+    def PostPic(self, im, codetype):
+        """
+        im: 图片字节
+        codetype: 题目类型 参考 http://www.chaojiying.com/price.html
+        """
+        params = {
+            'codetype': codetype,
+        }
+        params.update(self.base_params)
+        files = {'userfile': ('ccc.jpg', im)}
+        r = requests.post('http://upload.chaojiying.net/Upload/Processing.php', data=params, files=files, headers=self.headers)
+        return r.json()
+
+def auto():
+    all_info = [
+        ['0162170128','ting123456','河北省 秦皇岛市 昌黎县'],
+
+    ]
+    for i in all_info:
+        get(i[0],i[1],i[2])  
+
+if __name__ == "__main__":
+    auto()
